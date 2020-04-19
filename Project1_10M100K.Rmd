@@ -40,6 +40,10 @@ library(ggplot2)
 ## 1- loading or creating edx and validation data (Refere to the script to see code details)
 > .RDATA files are provided. to save time, place the file in the same directory as the script and the script will pick them up.
 > I found that if you run the data data extraction routine through RStudio, couple of records are missing in the edx dataset
+> Please download files using the below links. Place them in the same directory as the script.
+>
+> validation file : https://drive.google.com/open?id=1vJDE-26kh5ioWO7QX88Y-xoeRx4i7u8Q
+> edx file: https://drive.google.com/open?id=15GqskACjQXbd-xyI-kPnQoSWi1vbZZSF
 
 ```{r load_data, include=FALSE}
 

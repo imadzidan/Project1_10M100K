@@ -14,8 +14,12 @@ if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-
 if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
 if(!require(data.table)) install.packages("data.table", repos = "http://cran.us.r-project.org")
 
-# use .RDATA files if it exists to save time. I found that if you run the data data extraction routine through rStudio
+# use .RDATA files if they exists to save time. I found that if you run the data data extraction routine through rStudio
 # couple of records are missing in the edx dataset. place the .RDATA files in the the below dirctory to save time.
+#Please download files using the below links. Place them in the same directory as the script.
+
+# validation file : https://drive.google.com/open?id=1vJDE-26kh5ioWO7QX88Y-xoeRx4i7u8Q
+# edx file: https://drive.google.com/open?id=15GqskACjQXbd-xyI-kPnQoSWi1vbZZSF
 
 getwd()
 

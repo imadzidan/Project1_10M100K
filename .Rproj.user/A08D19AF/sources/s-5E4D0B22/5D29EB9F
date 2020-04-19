@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1587327745632.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "994044810",
+    "id" : "5D29EB9F",
+    "lastKnownWriteTime" : 1587327777,
+    "last_content_update" : 1587327777505,
+    "path" : "C:/GitWorking/Project1_10M100K/Project1_10M100K.Rmd",
+    "project_path" : "Project1_10M100K.Rmd",
+    "properties" : {
+        "cursorPosition" : "43,1",
+        "scrollLine" : "20"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}
