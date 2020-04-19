@@ -196,11 +196,11 @@ lambdas <- min(rmses_mu)
 dSet <- WhichDataSet("validation")
 str_c("there are ",nrow(dSet)," records in the validation dataset")
 
-# plot cross validation with the test dataset
-plot(lambdas, rmses_mu)
+# run algorithim against the validation dataset
+val_rmse <- rmses_mu
 
 # Store the result in a tibble
-rmse_results <- bind_rows(rmse_results,tibble(method = "Result from validation dataset", RMSE = min(rmses_mu)))
+rmse_results <- bind_rows(rmse_results,tibble(method = "Result from validation dataset", RMSE = val_rmse))
 
 
 # Output the tibble of all results

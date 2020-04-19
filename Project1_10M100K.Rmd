@@ -269,15 +269,16 @@ dSet <- WhichDataSet("validation")
 str_c("there are ",nrow(dSet)," records in the validation dataset")
 ```
 
-## 10.1 - plot cross validation with the validation dataset
+## 10.1 - run algorithim against the validation dataset
 ```{r, echo=TRUE}
-plot(lambdas, rmses_mu)
+
+val_rmse <- rmses_mu
 
 ```
 
 ## 10.2 - Store the result in a tibble
 ```{r, echo=TRUE}
-rmse_results <- bind_rows(rmse_results,tibble(method = "Result from validation dataset", RMSE = min(rmses_mu)))
+rmse_results <- bind_rows(rmse_results,tibble(method = "Result from validation dataset", RMSE = val_rmse))
 ```
 
 # 11 -  output the tibble of all results
