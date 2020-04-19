@@ -1,0 +1,285 @@
+---
+title: "Project 1_10M100K"
+author: "I Zidan"
+date: "15/04/2020"
+output: pdf_document
+---
+
+```{r, echo=FALSE}
+library(dplyr)
+library(ggplot2)
+```
+
+# Mission
+* Create a movie recommendation system using a customised datasets.
+* The datasets used is based on the 10M version of the MovieLens dataset.
+* Code for the dataset supplied by lecturer Rafael Razi.
+
+# Given
+* edx dataset as described above.
+* validation dataset for final prediction.
+
+# Requirement
+* Split the provided edx dataset into training and test partitions.
+* Analyse data.
+* Create a recommendation system.
+* Train algorithim
+* Test algorthim
+* Pproduce final predictions on the providedvalidation dataset.
+* Provide RMSE figures as a final ouput.
+
+
+
+# Methodology
+> When creating the algorithim, both movie and user effect on rating will be considered.
+> Based on regularisation principal, penalising concept will be followed for optimised results.
+
+# References
+> Course lecture notes
+
+## 1- loading or creating edx and validation data (Refere to the script to see code details)
+> .RDATA files are provided. to save time, place the file in the same directory as the script and the script will pick them up.
+> I found that if you run the data data extraction routine through RStudio, couple of records are missing in the edx dataset
+
+```{r load_data, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
+if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
+if(!require(data.table)) install.packages("data.table", repos = "http://cran.us.r-project.org")
+
+# use .RDATA files if it exists to save time.
+edxFile="C:/Users/44746/Documents/R/R ML Scripts/edx.RData"
+
+if (!file.exists(edxFile)) {
+  # MovieLens 10M dataset:
+  # https://grouplens.org/datasets/movielens/10m/
+  # http://files.grouplens.org/datasets/movielens/ml-10m.zip
+
+  dl <- tempfile()
+  download.file("http://files.grouplens.org/datasets/movielens/ml-10m.zip", dl)
+
+  ratings <- fread(text = gsub("::", "\t", readLines(unzip(dl, "ml-10M100K/ratings.dat"))),
+                 col.names = c("userId", "movieId", "rating", "timestamp"))
+
+  movies <- str_split_fixed(readLines(unzip(dl, "ml-10M100K/movies.dat")), "\\::", 3)
+  colnames(movies) <- c("movieId", "title", "genres")
+  movies <- as.data.frame(movies) %>% mutate(movieId = as.numeric(levels(movieId))[movieId],
+                                           title = as.character(title),
+                                           genres = as.character(genres))
+
+  movielens <- left_join(ratings, movies, by = "movieId")
+
+  # Validation set will be 10% of MovieLens data
+  set.seed(1)
+  # if using R 3.5 or earlier, use `set.seed(1)` instead
+  test_index <- createDataPartition(y = movielens$rating, times = 1, p = 0.1, list = FALSE)
+  edx <- movielens[-test_index,]
+  temp <- movielens[test_index,]
+
+  # Make sure userId and movieId in validation set are also in edx set
+  validation <- temp %>% 
+  semi_join(edx, by = "movieId") %>%
+  semi_join(edx, by = "userId")
+
+  # Add rows removed from validation set back into edx set
+  removed <- anti_join(temp, validation)
+  edx <- rbind(edx, removed)
+
+  rm(dl, ratings, movies, test_index, temp, movielens, removed)
+ } else {
+
+      load(file = "C:/Users/44746/Documents/R/R ML Scripts/edx.RData")
+      load(file = "C:/Users/44746/Documents/R/R ML Scripts/validation.RData")
+ }
+
+
+```
+
+# 2 - analyse contents
+## 2.1 - data overview in a snaphot
+```{r, echo=TRUE}
+
+summary(edx)
+
+```
+## 2.2 - Ploting rating by movie. 
+> This will visualise and in turn give an idea of movies' effect on rating.
+> Using histogram and bucketing
+
+```{r, echo=FALSE}
+
+edx %>% 
+     count(movieId) %>% 
+     ggplot(aes(n)) + 
+     geom_histogram(bins = 30, color = "black") + 
+     scale_x_log10() + 
+     ggtitle("Movies")
+```
+
+## 2.3 - Ploting rating by users. 
+> This will visualise and in turn give an idea of users' effect on rating.
+
+```{r, echo=FALSE}
+edx %>%
+     count(userId) %>% 
+     ggplot(aes(n)) + 
+     geom_histogram(bins = 30, color = "black") + 
+     scale_x_log10() +
+     ggtitle("Users")
+```
+
+## 3 - partition dataset. 
+> 30% of the edx data goes to test and the rest for training
+
+```{r partition, echo=TRUE}
+set.seed(1)
+rating_test_index <- createDataPartition(y = edx$rating, times = 1,  p = 0.3, list = FALSE)
+rating_train_set <- edx[-rating_test_index,]
+rating_test_set <- edx[rating_test_index,]
+```
+
+## 4 - process data. 
+```{r process, echo=TRUE}
+
+# function to set current dataset to use
+WhichDataSet <- function(partition) {
+  
+  if (partition == "train") {
+     rating_train_set
+  } else if (partition == "test") {
+      rating_test_set
+  } else if (partition == "validation") {
+     validation
+  }
+  
+}
+
+
+# Root Mean Square Error
+RMSE <- function(true_ratings, predicted_ratings){
+  sqrt(mean((true_ratings - predicted_ratings)^2))
+}
+
+# Set the dataset to training
+dSet <- WhichDataSet("train")
+
+str_c("there are ",nrow(dSet)," records in the training dataset")
+
+# The mean of the training data set
+mu <- mean(rating_train_set$rating) 
+
+# tuning factors sequence vector
+lambdas <- seq(0, 5, 0.1)
+
+# run algorithim and produce RMSE for each lamda and store in a vector 
+rmses_mu <- sapply(lambdas, function(l){
+
+
+  # Regularisation to estimate movies effect. 
+  # Penalising large estimates that come from small samples
+    low_ratings <- rating_train_set%>% 
+                  group_by(movieId)%>%
+                  summarize(low_ratings = sum(rating - mu)/(n()+l))
+  
+  
+  #Regularisation to estimate user effect.
+  #Penalising large estimates that come from small samples
+  scaled_mean <- rating_train_set %>% 
+                 left_join(low_ratings, by="movieId") %>%
+                 group_by(userId) %>%
+                 summarize(scaled_mean = sum(rating - low_ratings - mu)/(n()+l))  
+  
+  
+  # extract penalty value lambdas
+  predicted_ratings <- 
+    dSet %>% 
+    left_join(low_ratings, by = "movieId") %>%
+    left_join(scaled_mean, by = "userId") %>%
+    mutate(pred = mu + low_ratings + scaled_mean) %>%.$pred
+  
+  return(RMSE(dSet$rating,predicted_ratings))
+  
+})
+```
+
+# 5 - Cross validation of lambda tuning parameter.
+
+```{r run, echo=TRUE}
+plot(lambdas, rmses_mu)
+```
+
+# 6 - Output the best lambda
+```{r, echo=TRUE}
+
+min_lambda <- lambdas[which.min(rmses_mu)]
+
+str_c('Smallest RMSE: ', min(rmses_mu), ' by lambda: ', min_lambda)
+
+```
+
+# 7 - Store the result in a tibble
+```{r, echo=TRUE}
+rmse_results <- tibble(method = "Result from traing dataset", RMSE = min(rmses_mu))
+```
+
+# 8 - Set the dataset to test dataset.
+> This is to run the algorithim on the test partition.
+
+```{r, echo=TRUE}
+dSet <- WhichDataSet("test")
+str_c("there are ",nrow(dSet)," records in the test dataset")
+```
+
+## 8.1 - plot cross validation with the test dataset
+```{r, echo=TRUE}
+plot(lambdas, rmses_mu)
+
+```
+
+## 8.2 output the best lambda when test dataset is used
+```{r, echo=TRUE}
+
+min_lambda <- lambdas[which.min(rmses_mu)]
+
+str_c('Smallest RMSE: ', min(rmses_mu), ' by lambda: ', min_lambda)
+
+```
+
+## 8.3 - Store the result in a tibble
+```{r, echo=TRUE}
+rmse_results <- bind_rows(rmse_results,tibble(method = "Result from test dataset", RMSE = min(rmses_mu)))
+```
+
+## 9 - assign lambda to the smalles value found
+```{r, echo=TRUE}
+lambdas <- min(rmses_mu)
+```
+
+# 10 - Set the dataset to validation dataset.
+> This is to run the algorithim on the test partition.
+
+```{r, echo=TRUE}
+dSet <- WhichDataSet("validation")
+str_c("there are ",nrow(dSet)," records in the validation dataset")
+```
+
+## 10.1 - plot cross validation with the validation dataset
+```{r, echo=TRUE}
+plot(lambdas, rmses_mu)
+
+```
+
+## 10.2 - Store the result in a tibble
+```{r, echo=TRUE}
+rmse_results <- bind_rows(rmse_results,tibble(method = "Result from validation dataset", RMSE = min(rmses_mu)))
+```
+
+# 11 -  output the tibble of all results
+```{r, echo=TRUE}
+rmse_results
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
