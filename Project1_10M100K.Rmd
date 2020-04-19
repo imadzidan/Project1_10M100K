@@ -286,4 +286,10 @@ rmse_results
 
 ```
 
+# 12 - Conclusion
+
+> Regulaisation provides an optimised and explained results.
+> Final output is efficient when running the algorithim with the validation data.
+
+
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
