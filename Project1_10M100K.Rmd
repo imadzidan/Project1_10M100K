@@ -261,7 +261,7 @@ rmse_results <- bind_rows(rmse_results,tibble(method = "Result from test dataset
 
 ## 9 - assign lambda to the smalles value found
 ```{r, echo=TRUE}
-lambdas <- min(rmses_mu)
+lambdas <- lambdas[which.min(rmses_mu)]
 ```
 
 # 10 - Set the dataset to validation dataset.
@@ -281,7 +281,7 @@ val_rmse <- rmses_mu
 
 ## 10.2 - Store the result in a tibble
 ```{r, echo=TRUE}
-rmse_results <- bind_rows(rmse_results,tibble(method = "Result from validation dataset", RMSE = val_rmse))
+rmse_results <- bind_rows(rmse_results,tibble(method = "Result from validation dataset", RMSE = min(val_rmse)))
 ```
 
 # 11 -  output the tibble of all results

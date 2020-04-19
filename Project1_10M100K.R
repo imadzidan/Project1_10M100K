@@ -200,7 +200,7 @@ str_c("there are ",nrow(dSet)," records in the validation dataset")
 val_rmse <- rmses_mu
 
 # Store the result in a tibble
-rmse_results <- bind_rows(rmse_results,tibble(method = "Result from validation dataset", RMSE = val_rmse))
+rmse_results <- bind_rows(rmse_results,tibble(method = "Result from validation dataset", RMSE = min(val_rmse)))
 
 
 # Output the tibble of all results
