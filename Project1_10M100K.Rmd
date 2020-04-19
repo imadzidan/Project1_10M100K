@@ -287,7 +287,6 @@ rmse_results <- bind_rows(rmse_results,tibble(method = "Result from validation d
 # 11 -  output the tibble of all results
 ```{r, echo=TRUE}
 rmse_results
-
 ```
 
 # 12 - Conclusion
